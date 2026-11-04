@@ -131,6 +131,7 @@
         android:label="@string/MgServiceName"
         android:icon="@drawable/ic_mg_service"
         android:roundIcon="@drawable/ic_mg_service"
+        tools:replace="android:label,android:icon,android:roundIcon"
         android:allowBackup="true"
         android:restoreAnyVersion="true"
         android:backupAgent=".BackupAgent"
