@@ -54,3 +54,5 @@ jobs:
           name: Mercurygram-arm64-${{ github.event.inputs.build_tag }}
           path: ${{ steps.build.outputs.apk_path }}
           if-no-files-found: error
+
+# re-registered via API 20261104T094736Z
