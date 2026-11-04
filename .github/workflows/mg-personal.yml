@@ -26,6 +26,16 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Free disk space
+        run: |
+          echo "Before:"; df -h /
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+                      /opt/hostedtoolcache/CodeQL /usr/share/swift \
+                      /usr/local/lib/node_modules /usr/local/share/powershell \
+                      /usr/local/share/chromium /opt/microsoft || true
+          sudo docker image prune --all --force || true
+          echo "After:"; df -h /
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
