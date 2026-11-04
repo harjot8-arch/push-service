@@ -1,0 +1,56 @@
+# MG stealth: personal single-device build. arm64-v8a release APK only, built on
+# manual dispatch, uploaded as an artifact to download and sideload. Reuses the
+# repo's own build-mg composite action so the native build matches upstream CI.
+#
+# Required repo secrets (Settings > Secrets and variables > Actions):
+#   APP_ID, APP_HASH                         - Telegram api keys (my.telegram.org)
+#   RELEASE_KEYSTORE                         - base64 of your keystore .jks
+#   RELEASE_KEYSTORE_PASSWORD                - keystore password
+#   RELEASE_KEY_ALIAS                        - key alias
+#   RELEASE_KEY_PASSWORD                     - key password
+#
+# Use ONE stable keystore forever so updates install over the existing app.
+name: MG personal (arm64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_tag:
+        description: 'Version baked into the APK (4-dotted X.Y.Z.M, e.g. 13.0.3.1)'
+        required: true
+        default: '13.0.3.1'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build arm64 release APK
+        id: build
+        uses: ./.github/actions/build-mg
+        with:
+          flavor: afatFdArm64
+          task: assembleAfatFdArm64Release
+          abi: arm64-v8a
+          build-type: release
+          artifact-version: ${{ github.event.inputs.build_tag }}
+          build-tag: ${{ github.event.inputs.build_tag }}
+          app-id: ${{ secrets.APP_ID }}
+          app-hash: ${{ secrets.APP_HASH }}
+          release-keystore-b64: ${{ secrets.RELEASE_KEYSTORE }}
+          release-keystore-password: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          release-key-alias: ${{ secrets.RELEASE_KEY_ALIAS }}
+          release-key-password: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mercurygram-arm64-${{ github.event.inputs.build_tag }}
+          path: ${{ steps.build.outputs.apk_path }}
+          if-no-files-found: error

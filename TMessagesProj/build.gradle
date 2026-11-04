@@ -1,0 +1,457 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
+apply plugin: 'com.android.library'
+apply plugin: 'org.telegram.build-plugin'
+apply plugin: 'idea'
+
+idea {
+    module {
+        excludeDirs += [
+            file('jni/td'),
+            file('jni/third_party/absl'),
+            file('jni/third_party/boringssl'),
+            file('jni/third_party/dav1d'),
+            file('jni/third_party/ffmpeg'),
+            file('jni/third_party/libvpx'),
+            file('jni/third_party/libyuv'),
+            file('jni/third_party/openh264'),
+            file('jni/third_party/xiph'),
+            file('jni/third_party/wamr'),
+            file('jni/third_party/libprisma'),
+            file('jni/third_party/boost-regex'),
+            file('jni/tgcalls'),
+            file('jni/tlottie'),
+            file('jni/voip/webrtc'),
+            file('jni/sqlite')
+        ]
+    }
+}
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+configurations {
+    compile.exclude module: 'support-v4'
+}
+
+configurations.all {
+    exclude group: 'androidx.recyclerview', module: 'recyclerview'
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.8.0'
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'androidx.media:media:1.8.0'
+    implementation 'androidx.palette:palette:1.0.0'
+    implementation 'androidx.exifinterface:exifinterface:1.3.6'
+    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+    implementation "androidx.sharetarget:sharetarget:1.2.0"
+    implementation 'androidx.interpolator:interpolator:1.0.0'
+    implementation 'androidx.biometric:biometric:1.1.0'
+    implementation 'androidx.webkit:webkit:1.14.0'
+
+    // zxing core is Apache-2.0 pure Java on Maven Central, not Play Services;
+    // the com.google group id is a naming coincidence. Upstream dropped its
+    // vendored copy of these sources in 12.10.0 in favour of the artifact.
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation 'com.neovisionaries:nv-websocket-client:2.14'
+
+    implementation 'androidx.car.app:app:1.4.0'
+    implementation 'androidx.car.app:app-projected:1.4.0'
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    compileOnly 'org.checkerframework:checker-qual:2.5.2'
+    compileOnly 'org.checkerframework:checker-compat-qual:2.5.0'
+
+    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
+    implementation 'com.stripe:stripe-android:2.0.2'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.google.guava:guava:31.1-android'
+
+    implementation "androidx.credentials:credentials:1.6.0-alpha04"
+
+    implementation "io.noties.markwon:core:4.6.2"
+    implementation "io.noties.markwon:ext-strikethrough:4.6.2"
+    implementation "io.noties.markwon:ext-tables:4.6.2"
+    implementation "io.noties.markwon:html:4.6.2"
+    implementation "io.noties.markwon:inline-parser:4.6.2"
+    implementation("io.noties.markwon:ext-latex:4.6.2") {
+        exclude group: 'ru.noties', module: 'jlatexmath-android'
+    }
+
+    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer")
+    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-dash")
+    api project(":TMessagesProj_Modules:media3:media-lib-exoplayer-hls")
+    api project(":TMessagesProj_Modules:media3:media-lib-decoder-ffmpeg")
+    api project(":TMessagesProj_Modules:media3:media-lib-session")
+    api project(':jlatexmath')
+
+//    implementation 'com.google.mlkit:translate:17.0.3'
+
+    // 3.0.10 or later: 3.0.9 and older bind our PushService to hand over an event and unbind
+    // after 1s, which the cold start of this app regularly loses, and a bind that never
+    // connects leaves the connector's internal event queue stuck for the whole process (no
+    // endpoint, no messages).
+    implementation 'org.unifiedpush.android:connector:3.3.5'
+    // 3.1.0 or later: 3.0.0 asks Play Services for a token with the legacy
+    // com.google.iid.TOKEN_REQUEST broadcast, which current Play Services never answers, so
+    // a new registration waits for an endpoint forever.
+    implementation 'org.unifiedpush.android:embedded-fcm-distributor:3.1.0'
+    implementation 'org.maplibre.gl:android-sdk:13.7.1'
+
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+}
+
+//return an api key from a properties file.
+def getAppId() {
+    Properties properties = new Properties()
+    properties.load(new FileInputStream("./API_KEYS"))
+    return properties.get("APP_ID")
+}
+def getAppHash() {
+    Properties properties = new Properties()
+    properties.load(new FileInputStream("./API_KEYS"))
+    return "\"" + properties.get("APP_HASH") + "\""
+}
+
+// If all requested tasks target the same single F-Droid per-ABI flavor, return that ABI
+// so the library's CMake build can be limited to just that ABI. Returns null otherwise
+// (fat builds, local development, multiple ABIs requested).
+// Note: flavors are matched longest-first so AfatFdX86_64 is matched before AfatFdX86.
+def detectSingleFdAbi() {
+    def fdFlavorToAbi = [
+        'AfatFdArm64'  : 'arm64-v8a',
+        'AfatFdArm32'  : 'armeabi-v7a',
+        'AfatFdX86_64' : 'x86_64',
+        'AfatFdX86'    : 'x86',
+    ]
+    def detectedAbis = [] as Set
+    gradle.startParameter.taskNames.each { taskName ->
+        // Match longest flavor name first to avoid AfatFdX86 matching inside AfatFdX86_64.
+        def matched = fdFlavorToAbi.sort { -it.key.length() }.find { flavor, _ ->
+            taskName.contains(flavor)
+        }
+        if (matched) detectedAbis << matched.value
+    }
+    return detectedAbis.size() == 1 ? detectedAbis.first() : null
+}
+def singleFdAbi = detectSingleFdAbi()
+
+android {
+    compileSdkVersion 36
+    buildToolsVersion '36.0.0'
+    ndkVersion "27.2.12479018"
+
+
+    externalNativeBuild {
+        cmake {
+            path 'jni/CMakeLists.txt'
+        }
+    }
+
+    aaptOptions {
+        cruncherEnabled = false
+    }
+
+    lintOptions {
+        disable 'MissingTranslation'
+        disable 'ExtraTranslation'
+        disable 'BlockedPrivateApi'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+
+        coreLibraryDesugaringEnabled true
+    }
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 36
+
+        vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+
+        multiDexEnabled true
+
+        // Limit CMake to a single ABI for per-ABI F-Droid builds; has no effect otherwise.
+        if (singleFdAbi) ndk.abiFilters singleFdAbi
+
+        externalNativeBuild {
+            cmake {
+                version '3.22.1'
+                def cmakeArgs = ['-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-24'] //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+                if (getProps('QUIET_NATIVE_BUILD')) {
+                    cmakeArgs += '-DQUIET_BUILD=ON'
+                }
+                arguments(*cmakeArgs)
+                targets 'tmessages.49'
+            }
+        }
+
+        buildConfigField "int", "APP_ID", getAppId()
+        buildConfigField "String", "APP_HASH", getAppHash()
+    }
+
+    buildTypes {
+        debug {
+            jniDebuggable true
+            shrinkResources false
+            multiDexEnabled true
+            ndk.debugSymbolLevel = 'FULL'
+            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+            buildConfigField "String", "BETA_URL", "\"\""
+            buildConfigField "boolean", "DEBUG_VERSION", "true"
+            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "true"
+            buildConfigField "boolean", "BUNDLE", "false"
+            buildConfigField "int", "VERSION_NUM", "0"
+        }
+
+        standalone {
+            matchingFallbacks = ['release']
+            jniDebuggable false
+            multiDexEnabled true
+            ndk.debugSymbolLevel = 'FULL'
+            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+            buildConfigField "String", "BETA_URL", "\"\""
+            buildConfigField "boolean", "DEBUG_VERSION", "false"
+            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
+            buildConfigField "boolean", "BUNDLE", "false"
+            buildConfigField "int", "VERSION_NUM", "6"
+        }
+
+        release {
+            jniDebuggable false
+            shrinkResources false
+            multiDexEnabled true
+            ndk.debugSymbolLevel = 'FULL'
+            buildConfigField "String", "BUILD_VERSION_STRING", "\"" + APP_VERSION_NAME + "\""
+            buildConfigField "String", "BETA_URL", "\"\""
+            buildConfigField "boolean", "DEBUG_VERSION", "false"
+            buildConfigField "boolean", "DEBUG_PRIVATE_VERSION", "false"
+            buildConfigField "boolean", "BUNDLE", "false"
+            buildConfigField "int", "VERSION_NUM", "7"
+        }
+    }
+
+    namespace 'org.telegram.messenger'
+
+    buildFeatures {
+        aidl = true
+    }
+}
+
+
+def getProps(String propName) {
+    def propsFile = rootProject.file('local.properties')
+    if (propsFile.exists()) {
+        def props = new Properties()
+        props.load(new FileInputStream(propsFile))
+        return props[propName]
+    } else {
+        return "";
+    }
+}
+
+// Shared first step: init submodules and apply source-tree patches (idempotent).
+// All per-ABI tasks depend on this so patches are applied exactly once.
+task patchNativeSources {
+    description = 'Init native submodules and apply source patches.'
+    doLast {
+        exec {
+            workingDir rootDir
+            commandLine 'git', 'submodule', 'update', '--init',
+                'TMessagesProj/jni/third_party/libvpx',
+                'TMessagesProj/jni/third_party/ffmpeg',
+                'TMessagesProj/jni/third_party/dav1d',
+                'TMessagesProj/jni/third_party/xiph/ogg',
+                'TMessagesProj/jni/third_party/xiph/opus',
+                'TMessagesProj/jni/third_party/xiph/opusfile',
+                'TMessagesProj/jni/third_party/openh264',
+                'TMessagesProj/jni/third_party/libyuv',
+                'TMessagesProj/jni/tgcalls',
+                'TMessagesProj/jni/wallet-engine',
+                'TMessagesProj/jni/third_party/libprisma',
+                'TMessagesProj/jni/third_party/boost-regex',
+                'TMessagesProj/jni/third_party/boringssl',
+                'TMessagesProj/jni/tlottie',
+                'TMessagesProj/jni/td',
+                'TMessagesProj/jni/whisper'
+        }
+        // ffbuild/version.sh bakes FFMPEG_VERSION into libavutil, preferring a
+        // VERSION file in the source root over `git describe`. Left to git the
+        // string depends on whether the clone carries tags and on git's
+        // auto-scaled abbreviation length, so the same pin can produce
+        // "n8.1.2-30-g45f1910444" or "45f1910444" depending on how the
+        // submodule was fetched. Pinning it to the full submodule SHA makes the
+        // archives byte-identical across shallow and full checkouts, which
+        // F-Droid reproducibility needs. Upstream never hit this: it builds
+        // from a checkout that has tags.
+        def ffmpegDir = file("${projectDir}/jni/third_party/ffmpeg")
+        def ffmpegSha = providers.exec {
+            commandLine 'git', '-C', ffmpegDir.toString(), 'rev-parse', 'HEAD'
+        }.standardOutput.asText.get().trim()
+        new File(ffmpegDir, 'VERSION').text = ffmpegSha + '\n'
+
+        for (script in ['patch_dav1d.sh', 'patch_td.sh', 'patch_tgcalls.sh']) {
+            exec {
+                workingDir "${projectDir}/jni"
+                commandLine 'bash', script
+            }
+        }
+    }
+}
+
+// Upstream builds every bundled static library from source with
+// jni/prebuild/build_*.sh and commits the resulting archives. F-Droid cannot
+// ship binaries it did not build, so the archives are gitignored and the same
+// scripts run here instead. They read ABIS/LIB_DIR/INCLUDE_DIR from the
+// environment and already do the reproducibility work the fork used to bolt on
+// itself: prefix-mapping the checkout and the NDK to /jni and /android-ndk,
+// SOURCE_DATE_EPOCH/TZ/LC_ALL, stripping debug info and .comment, and
+// rewriting the configure command line libvpx and ffmpeg compile into their
+// own archives (jni/prebuild/common.sh).
+//
+// build_all.sh is deliberately not used: it wipes lib/ and include/ before
+// running, which would throw away the other ABIs on every per-ABI task.
+def prebuildSteps = [
+    ['build_boringssl.sh', ['libcrypto.a', 'libssl.a']],
+    ['build_openh264.sh' , ['libopenh264.a']],
+    ['build_opus.sh'     , ['libopus.a']],
+    ['build_libvpx.sh'   , ['libvpx.a']],
+    ['build_dav1d.sh'    , ['libdav1d.a']],
+    ['build_ffmpeg.sh'   , ['libavcodec.a', 'libavformat.a', 'libavutil.a',
+                            'libswresample.a', 'libswscale.a']],
+    ['build_tlottie.sh'  , ['libtlottie.a']],
+    ['build_wallet_engine.sh', ['libwallet_engine.a']],
+    ['build_tdlib.sh'    , ['libtde2e.a', 'libtdutils.a']],
+    ['build_wamr.sh'     , ['libiwasm.a']],
+    ['build_prisma.sh'   , ['libprisma.a']],
+]
+
+// Pinned rustc for jni/prebuild/build_tlottie.sh, installed by jni/setup_rust.sh.
+// A different rustc emits different code for identical sources, so the version
+// is fixed here; the paths it records are already remapped by the script.
+def rustToolchain = '1.97.1'
+// jni/prebuild/build_wallet_engine.sh: the release jni/gram-wallet/rust-toolchain.toml names.
+def walletRustToolchain = '1.96.1'
+def rustupHome    = '/var/tmp/mg-rustup'
+def cargoHome     = '/var/tmp/mg-cargo'
+
+// Pinned wasi-sdk for jni/build_wasm_core.sh, installed by jni/setup_wasi_sdk.sh.
+// Upstream commits the call core wasm module as jni/voip/ReferenceCoreEmbedded.cpp;
+// we build it, with the release upstream uses so the module stays byte-identical.
+def wasiSdkVersion = '33.0'
+def wasiSdkSha256  = '0ba8b5bfaeb2adf3f29bab5841d76cf5318ab8e1642ea195f88baba1abd47bce'
+def wasiSdkRoot    = '/var/tmp/mg-wasi-sdk'
+
+// Register one build task per ABI. Each task compiles only for its ABI, so an
+// F-Droid single-ABI build still compiles one ABI.
+['buildNativeLibsArm64'  : 'arm64-v8a',
+ 'buildNativeLibsArm32'  : 'armeabi-v7a',
+ 'buildNativeLibsX86_64' : 'x86_64',
+ 'buildNativeLibsX86'    : 'x86',
+].each { taskName, abi ->
+    tasks.register(taskName) {
+        description = "Build native libraries for ${abi}."
+        dependsOn patchNativeSources
+        doLast {
+            def prebuildDir = "${projectDir}/jni/prebuild"
+            def libDir = file("${prebuildDir}/lib/${abi}")
+            def baseEnv = [
+                ANDROID_NDK_HOME: android.ndkDirectory.toString(),
+                ANDROID_SDK_ROOT: android.sdkDirectory.toString(),
+                ABIS            : abi,
+            ]
+            if (System.getenv('NINJA_PATH')) {
+                baseEnv['NINJA_BIN'] = System.getenv('NINJA_PATH')
+            }
+
+            // ABI independent, so the first per-ABI task to run builds it.
+            if (!file("${projectDir}/jni/voip/ReferenceCoreEmbedded.cpp").exists()) {
+                exec {
+                    workingDir "${projectDir}/jni"
+                    environment WASI_SDK_ROOT: wasiSdkRoot
+                    commandLine 'bash', 'setup_wasi_sdk.sh', wasiSdkVersion, wasiSdkSha256
+                }
+                exec {
+                    workingDir "${projectDir}/jni"
+                    commandLine 'bash', 'build_wasm_core.sh', "${wasiSdkRoot}/wasi-sdk-${wasiSdkVersion}"
+                }
+            }
+
+            prebuildSteps.each { script, archives ->
+                // build_ffmpeg.sh also writes the per-ABI generated headers
+                // CMake compiles against, and build_wallet_engine.sh the UniFFI
+                // bindings, so a run interrupted between the archives and
+                // those files has to repeat.
+                def done = archives.every { new File(libDir, it).exists() } &&
+                    (script != 'build_ffmpeg.sh' ||
+                        file("${prebuildDir}/include/${abi}/libavutil/avconfig.h").exists()) &&
+                    (script != 'build_wallet_engine.sh' ||
+                        file("${prebuildDir}/include/wallet-engine/wallet_engine.cpp").exists())
+                if (done) {
+                    return
+                }
+                def env = new LinkedHashMap(baseEnv)
+                if (script == 'build_tlottie.sh' || script == 'build_wallet_engine.sh') {
+                    def toolchain = script == 'build_tlottie.sh' ? rustToolchain : walletRustToolchain
+                    env['RUSTUP_HOME'] = rustupHome
+                    env['CARGO_HOME'] = cargoHome
+                    env['PATH'] = "${cargoHome}/bin:" + System.getenv('PATH')
+                    if (script == 'build_tlottie.sh') {
+                        env['TLOTTIE_RUST_TOOLCHAIN'] = toolchain
+                    } else {
+                        // Overrides rust-toolchain.toml, whose rustfmt/clippy
+                        // components the build does not need.
+                        env['RUSTUP_TOOLCHAIN'] = toolchain
+                    }
+                    exec {
+                        workingDir "${projectDir}/jni"
+                        environment env
+                        commandLine 'bash', 'setup_rust.sh', toolchain
+                    }
+                }
+                exec {
+                    workingDir prebuildDir
+                    environment env
+                    commandLine 'bash', "${prebuildDir}/${script}"
+                }
+            }
+        }
+    }
+}
+
+// Ensure sequential execution when all 4 per-ABI tasks run together (fat builds),
+// avoiding races in patch scripts that write shared source files.
+tasks.named('buildNativeLibsArm32').configure  { mustRunAfter 'buildNativeLibsArm64'  }
+tasks.named('buildNativeLibsX86_64').configure { mustRunAfter 'buildNativeLibsArm32'  }
+tasks.named('buildNativeLibsX86').configure    { mustRunAfter 'buildNativeLibsX86_64' }
+
+// Combined task for fat/bundle builds (all 4 ABIs).
+task buildNativeLibs(description: 'Build native libraries for all ABIs.') {
+    dependsOn 'buildNativeLibsArm64', 'buildNativeLibsArm32',
+              'buildNativeLibsX86_64', 'buildNativeLibsX86'
+}
+
+// Wire each CMake task to the matching per-ABI native build task.
+// CMake task names include the ABI in brackets, e.g. configureCMakeRelease[arm64-v8a].
+afterEvaluate {
+    def abiToTask = [
+        'arm64-v8a'   : 'buildNativeLibsArm64',
+        'armeabi-v7a' : 'buildNativeLibsArm32',
+        'x86_64'      : 'buildNativeLibsX86_64',
+        'x86'         : 'buildNativeLibsX86',
+    ]
+    def fallbackTask = singleFdAbi ? abiToTask[singleFdAbi] : 'buildNativeLibs'
+    tasks.matching {
+        it.name.matches('configureCMake.*') ||
+            it.name.matches('buildCMake.*') ||
+            it.name.matches('externalNativeBuild.*')
+    }.configureEach { task ->
+        def matched = abiToTask.find { abi, _ -> task.name.contains(abi) }
+        task.dependsOn tasks.named(matched ? matched.value : fallbackTask)
+    }
+}

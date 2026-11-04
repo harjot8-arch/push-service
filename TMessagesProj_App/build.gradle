@@ -1,0 +1,302 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.telegram.build-app-plugin'
+
+// Derive rootProject.ext.MG_VERSION_NAME / MG_VERSION_CODE from MG_BUILD_TAG.
+apply from: "$rootDir/gradle/mg-version.gradle"
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+configurations {
+    compile.exclude module: 'support-v4'
+}
+
+configurations.all {
+    exclude group: 'androidx.recyclerview', module: 'recyclerview'
+}
+
+dependencies {
+    implementation project(':TMessagesProj')
+    implementation 'androidx.multidex:multidex:2.0.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+}
+
+android {
+    compileSdkVersion 36
+    buildToolsVersion '36.0.0'
+
+    defaultConfig.applicationId = APP_PACKAGE
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    aaptOptions {
+        cruncherEnabled = false
+    }
+
+    lintOptions {
+        disable 'MissingTranslation'
+        disable 'ExtraTranslation'
+        disable 'BlockedPrivateApi'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+
+        coreLibraryDesugaringEnabled true
+    }
+
+    androidResources {
+        noCompress += "pack"
+        localeFilters += ["zz"]
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file(findProperty('RELEASE_STORE_FILE') ?: "../TMessagesProj/config/release.keystore")
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
+            // v4 .idsig sits beside the APK and would mismatch fdroid's reproducible build
+            enableV4Signing false
+        }
+
+        release {
+            storeFile file(findProperty('RELEASE_STORE_FILE') ?: "../TMessagesProj/config/release.keystore")
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+            // v1 (JAR) signing disabled: Mercurygram's MANIFEST.MF is too large
+            // (~900 KB / 10k entries) for apksigner's multi-block deflate to match
+            // the single-pass deflate apksigcopier expects when grafting the dev
+            // signature onto the F-Droid reproducible build. Dropping v1 forces
+            // minSdk >= 24 globally so v2+v3 alone cover every supported install
+            // (see defaultConfig.minSdkVersion below). v4 .idsig sidecar would
+            // not be in the APK and would mismatch the reproducible build.
+            enableV1Signing false
+            enableV2Signing true
+            enableV3Signing true
+            enableV4Signing false
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".beta"
+            minifyEnabled false
+            shrinkResources false
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
+            ndk.debugSymbolLevel = 'FULL'
+        }
+
+        standalone {
+            debuggable false
+            jniDebuggable false
+            signingConfig signingConfigs.release
+            applicationIdSuffix ".web"
+            minifyEnabled true
+            shrinkResources true
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
+            ndk.debugSymbolLevel = 'FULL'
+        }
+
+        release {
+            debuggable false
+            jniDebuggable false
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
+            ndk.debugSymbolLevel = 'FULL'
+        }
+    }
+
+    sourceSets.debug {
+        manifest.srcFile '../TMessagesProj/config/debug/AndroidManifest.xml'
+    }
+
+    sourceSets.standalone {
+        manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
+    }
+
+    sourceSets.release {
+        manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
+    }
+
+    flavorDimensions "minApi"
+
+    productFlavors {
+        bundleAfat {
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+            ext {
+                abiVersionCode = 1
+            }
+            buildConfigField "boolean", "BUNDLE", "true"
+        }
+        afat {
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+            }
+            sourceSets.debug {
+                manifest.srcFile '../TMessagesProj/config/debug/AndroidManifest_SDK23.xml'
+            }
+            sourceSets.release {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_SDK23.xml'
+            }
+            sourceSets.standalone {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_standalone.xml'
+            }
+            ext {
+                abiVersionCode = 9
+            }
+            buildConfigField "boolean", "BUNDLE", "false"
+        }
+        afatFdArm32 {
+            ndk {
+                abiFilters "armeabi-v7a"
+            }
+            sourceSets.debug {
+                manifest.srcFile '../TMessagesProj/config/debug/AndroidManifest_SDK23.xml'
+            }
+            sourceSets.release {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_SDK23.xml'
+            }
+            ext {
+                abiVersionCode = 7
+            }
+            buildConfigField "boolean", "BUNDLE", "false"
+        }
+        afatFdArm64 {
+            ndk {
+                abiFilters "arm64-v8a"
+            }
+            sourceSets.debug {
+                manifest.srcFile '../TMessagesProj/config/debug/AndroidManifest_SDK23.xml'
+            }
+            sourceSets.release {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_SDK23.xml'
+            }
+            ext {
+                abiVersionCode = 8
+            }
+            buildConfigField "boolean", "BUNDLE", "false"
+        }
+        afatFdX86 {
+            ndk {
+                abiFilters "x86"
+            }
+            sourceSets.debug {
+                manifest.srcFile '../TMessagesProj/config/debug/AndroidManifest_SDK23.xml'
+            }
+            sourceSets.release {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_SDK23.xml'
+            }
+            ext {
+                abiVersionCode = 3
+            }
+            buildConfigField "boolean", "BUNDLE", "false"
+        }
+        afatFdX86_64 {
+            ndk {
+                abiFilters "x86_64"
+            }
+            sourceSets.debug {
+                manifest.srcFile '../TMessagesProj/config/debug/AndroidManifest_SDK23.xml'
+            }
+            sourceSets.release {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest_SDK23.xml'
+            }
+            ext {
+                abiVersionCode = 4
+            }
+            buildConfigField "boolean", "BUNDLE", "false"
+        }
+    }
+
+    defaultConfig.versionCode = rootProject.ext.MG_VERSION_CODE
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def flavorName = variant.productFlavors.get(0).name
+            def isBeta = variant.buildType.name == "debug" && project.hasProperty("MG_BETA_VERSION_CODE")
+            if (isBeta) {
+                outputFileName = "${flavorName}.apk"
+                output.versionCodeOverride = Integer.parseInt(MG_BETA_VERSION_CODE)
+                output.versionNameOverride = MG_BETA_VERSION_NAME
+            } else {
+                outputFileName = flavorName.startsWith("afatFd") ? "${flavorName}.apk" : "app.apk"
+                output.versionCodeOverride = defaultConfig.versionCode * 10 + variant.productFlavors.get(0).abiVersionCode
+            }
+        }
+    }
+
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        def isFdFlavor = names.any { it.startsWith("afatFd") }
+        if (variant.buildType.name != "release" && !names.contains("afat") && !isFdFlavor) {
+            setIgnore(true)
+        }
+    }
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 36
+        versionName rootProject.ext.MG_VERSION_NAME
+        ndkVersion "27.2.12479018"
+
+        multiDexEnabled true
+
+        vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+
+        externalNativeBuild {
+            cmake {
+                version '3.22.1'
+                arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-24' // , '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+                targets 'tmessages.49'
+            }
+        }
+    }
+
+    bundle {
+        language {
+            // Ship every locale in the base install. Telegram's own strings come
+            // from the server langpack, but the Mercurygram ones live in
+            // res/values-*, so a per-language split leaves them English for
+            // anyone whose in-app language differs from the device locale Play
+            // installed a split for.
+            enableSplit = false
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+    namespace 'org.telegram.messenger.regular'
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+}
+

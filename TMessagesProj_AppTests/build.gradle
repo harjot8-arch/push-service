@@ -1,0 +1,218 @@
+// Kotlin is needed only by this module's existing instrumentation tests.
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"
+    }
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'test-generator'
+apply plugin: 'org.telegram.build-app-plugin'
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+configurations {
+    compile.exclude module: 'support-v4'
+}
+
+configurations.all {
+    exclude group: 'com.google.firebase', module: 'firebase-core'
+    exclude group: 'androidx.recyclerview', module: 'recyclerview'
+}
+
+dependencies {
+    implementation project(':TMessagesProj')
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
+    androidTestImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-test:2.1.20"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:2.1.20"
+    androidTestImplementation "com.appmattus.fixture:fixture:1.2.0"
+}
+
+android {
+    compileSdkVersion 36
+    buildToolsVersion '36.0.0'
+
+    defaultConfig.applicationId = APP_PACKAGE
+
+    testBuildType "debug"
+
+    // [MG] com.appmattus.fixture pulls libnarcissus-{macos,win}-*.{dylib,dll}
+    // into androidTest classpath. AGP repackages them under `lib/` in the
+    // APK, then PackageManager fails install with
+    // INSTALL_FAILED_NO_MATCHING_ABIS (sees lib/ dir without a matching ABI
+    // subfolder). Strip host natives — only Android .so under lib/<abi>/
+    // belong here.
+    packaging {
+        resources {
+            excludes += ['lib/*.dylib', 'lib/*.dll']
+        }
+    }
+
+    // [MG] Gradle Managed Devices — headless local test target. Mirrors the
+    // CI emulator (API 30, x86_64, AOSP "default" system image) so
+    // `./gradlew :TMessagesProj_AppTests:api30DebugAndroidTest` runs the
+    // same matrix locally without manual AVD setup.
+    testOptions {
+        managedDevices {
+            localDevices {
+                api30 {
+                    device = "Pixel 5"
+                    apiLevel = 30
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
+
+    lintOptions {
+        disable 'MissingTranslation'
+        disable 'ExtraTranslation'
+        disable 'BlockedPrivateApi'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+
+        coreLibraryDesugaringEnabled true
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+        // embedded-fcm-distributor 3.1.0 pulls kotlin-stdlib 2.3.0, newer metadata than the
+        // 2.1.0 compiler of the upstream kotlin-gradle-plugin accepts. The app itself has no
+        // Kotlin sources, so only this test module needs it. Drop once the plugin reaches 2.2+.
+        freeCompilerArgs += ["-Xskip-metadata-version-check"]
+    }
+
+    androidResources {
+        noCompress += "pack"
+        localeFilters += ["zz"]
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("../TMessagesProj/config/release.keystore")
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+        }
+
+        release {
+            storeFile file("../TMessagesProj/config/release.keystore")
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".web"
+            minifyEnabled false
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
+            ndk.debugSymbolLevel = 'FULL'
+        }
+        standalone {
+            debuggable false
+            jniDebuggable false
+            signingConfig signingConfigs.release
+            applicationIdSuffix ".web"
+            minifyEnabled true
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
+            ndk.debugSymbolLevel = 'FULL'
+        }
+    }
+
+    sourceSets.debug {
+        manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
+    }
+    sourceSets.standalone {
+        manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
+    }
+
+    flavorDimensions "minApi"
+
+    productFlavors {
+        afat {
+            ndk {
+                // [MG] Test APK only runs on the x86_64 emulator (CI + GMD).
+                // Restricting to one ABI cuts assemble + native-link time ~75%
+                // (was 4 ABIs upstream); each ABI delta is just the native
+                // ndk-build/cmake step. Test APK never ships.
+                abiFilters "x86_64"
+            }
+            ext {
+                abiVersionCode = 9
+            }
+            sourceSets.standalone {
+                manifest.srcFile '../TMessagesProj/config/release/AndroidManifest.xml'
+            }
+        }
+    }
+
+    defaultConfig.versionCode = Integer.parseInt(APP_VERSION_CODE)
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "app.apk"
+            output.versionCodeOverride = defaultConfig.versionCode * 10 + variant.productFlavors.get(0).abiVersionCode
+        }
+    }
+
+    variantFilter { variant ->
+        def names = variant.flavors*.name
+        if (variant.buildType.name != "release" && !names.contains("afat")) {
+            setIgnore(true)
+        }
+    }
+
+    defaultConfig {
+        minSdkVersion 26
+        targetSdkVersion 36
+        versionName APP_VERSION_NAME
+        ndkVersion "27.2.12479018"
+
+        multiDexEnabled true
+
+        vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+
+        externalNativeBuild {
+            cmake {
+                version '3.22.1'
+                arguments '-DANDROID_STL=c++_static', '-DANDROID_PLATFORM=android-21' //, '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
+                targets 'tmessages.49'
+            }
+        }
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+
+    buildFeatures {
+        buildConfig = true
+    }
+    namespace 'org.telegram.messenger.test'
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+}
+

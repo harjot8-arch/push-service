@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MG stealth: minimal device-admin policy. Being an active admin blocks a casual
+     uninstall from the app drawer / Settings (Android forces the user to deactivate the
+     admin first). This is the realistic ceiling on a non-device-owner phone; it does NOT
+     block force-stop and can still be undone from Settings > Security > Device admin apps. -->
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies>
+        <force-lock />
+    </uses-policies>
+</device-admin>
