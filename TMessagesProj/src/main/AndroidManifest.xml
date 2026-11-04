@@ -128,9 +128,6 @@
 
     <application
         android:name="org.telegram.messenger.ApplicationLoader"
-        android:label="@string/MgServiceName"
-        android:icon="@drawable/ic_mg_service"
-        android:roundIcon="@drawable/ic_mg_service"
         android:allowBackup="true"
         android:restoreAnyVersion="true"
         android:backupAgent=".BackupAgent"
@@ -142,7 +139,7 @@
         android:requestLegacyExternalStorage="true"
         android:preserveLegacyExternalStorage="true"
         android:allowAudioPlaybackCapture="true"
-        tools:replace="android:supportsRtl,android:label,android:icon,android:roundIcon"
+        tools:replace="android:supportsRtl"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true"
     >
