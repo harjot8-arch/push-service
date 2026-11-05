@@ -260,7 +260,7 @@
     <string name="MercurygramDisableCloudDraftsAbout">Don\'t upload unsent drafts to Telegram. Drafts stay on this device and stop appearing on your other devices.</string>
     <string name="MercurygramConfirmInternalLinks">Confirm Telegram links</string>
     <string name="MercurygramConfirmInternalLinksAbout">Ask for confirmation before opening t.me and tg:// links, showing the address first. Useful against links that quietly join a channel or open a bot.</string>
-    <string name="MercurygramKeepAliveNotification">Keep-alive service</string>
+    <string name="MercurygramKeepAliveNotification">Media Service</string>
     <string name="MercurygramKeepAliveNotificationHide">Tap to hide this notification</string>
     <string name="MercurygramFolder">Mercurygram folder</string>
     <string name="MercurygramFolderInfo">Shown only in Mercurygram, never sent to Telegram as a folder, so no folder or chat limit. Synced between your Mercurygram apps through one file in Saved Messages. Switching it on an existing folder moves the folder between Telegram and Mercurygram.</string>

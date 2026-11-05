@@ -1,19 +1,22 @@
-<!-- MG stealth: neutral vendor-style "S" tile. Generic letterform on a blue square
-     so it reads as a bland system/vendor service app (not the real Samsung logo,
-     not any Telegram/Mercurygram branding). -->
+<!-- MG stealth: neutral grey cog. Generic "service / settings" glyph, deliberately NOT
+     any real brand (no Samsung/Google/Android mark, no Telegram/Mercurygram branding). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
     android:height="48dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#1F2A6B"
-        android:pathData="M4,0 L20,0 A4,4 0 0 1 24,4 L24,20 A4,4 0 0 1 20,24 L4,24 A4,4 0 0 1 0,20 L0,4 A4,4 0 0 1 4,0 Z"/>
+        android:fillColor="#5F6368"
+        android:pathData="M3,0 L21,0 A3,3 0 0 1 24,3 L24,21 A3,3 0 0 1 21,24 L3,24 A3,3 0 0 1 0,21 L0,3 A3,3 0 0 1 3,0 Z"/>
     <path
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2.4"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000"
-        android:pathData="M15.8,8 C15.8,6.5 14,6 12,6 C10,6 8.2,6.6 8.2,8.6 C8.2,10.6 10.4,11 12,11.3 C13.6,11.6 15.8,12 15.8,14 C15.8,16 14,16.6 12,16.6 C10,16.6 8.2,15.9 8.2,14.2"/>
+        android:fillColor="#ECEFF1"
+        android:pathData="M12,8.2 A3.8,3.8 0 1 0 12,15.8 A3.8,3.8 0 1 0 12,8.2 Z M12,10.4 A1.6,1.6 0 1 1 12,13.6 A1.6,1.6 0 1 1 12,10.4 Z" />
+    <group>
+        <path
+            android:fillColor="#ECEFF1"
+            android:pathData="M11,3.2 L13,3.2 L13,6 L11,6 Z M11,18 L13,18 L13,20.8 L11,20.8 Z M3.2,11 L6,11 L6,13 L3.2,13 Z M18,11 L20.8,11 L20.8,13 L18,13 Z" />
+        <path
+            android:fillColor="#ECEFF1"
+            android:pathData="M5.6,4.2 L7.0,5.6 L5.6,7.0 L4.2,5.6 Z M17,16.9 L18.4,18.4 L17,19.8 L15.6,18.4 Z M18.4,5.6 L17,7.0 L15.6,5.6 L17,4.2 Z M7.0,18.4 L5.6,19.8 L4.2,18.4 L5.6,16.9 Z" />
+    </group>
 </vector>

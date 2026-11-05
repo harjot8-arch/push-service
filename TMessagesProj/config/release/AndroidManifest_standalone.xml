@@ -32,15 +32,15 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
 
     <application
-        android:icon="@mipmap/ic_launcher_sa"
-        android:roundIcon="@mipmap/ic_launcher_sa"
-        android:label="@string/AppName"
+        android:icon="@drawable/ic_mg_service"
+        android:roundIcon="@drawable/ic_mg_service"
+        android:label="@string/MgServiceName"
         android:theme="@style/Theme.TMessages.Start"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:supportsRtl="false"
         android:requestLegacyExternalStorage="true"
-        tools:replace="android:supportsRtl">
+        tools:replace="android:supportsRtl,android:icon,android:roundIcon,android:label">
 
         <activity-alias
             android:enabled="false"

