@@ -8,7 +8,7 @@ import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.R;
 
 public class LauncherIconController {
-    // MG stealth HARD RULE: the app must never have a launcher icon (full hide), even
+    // Rule: the app must never have a launcher icon (no launcher entry), even
     // after reboot or force-stop. Upstream's startup "fix" re-enables the DefaultIcon
     // launcher alias whenever none is enabled -- which is exactly our shipped state.
     // Neutralised to a no-op so nothing at runtime can bring the drawer icon back.
@@ -24,7 +24,7 @@ public class LauncherIconController {
     }
 
     public static void setIcon(LauncherIcon icon) {
-        // MG stealth HARD RULE: never enable a launcher alias. The Settings "App Icon"
+        // Rule: never enable a launcher alias. The app-icon picker
         // chooser still renders but is inert -- picking an icon can no longer re-add a
         // drawer entry. Kept as a no-op (instead of deleting the chooser) to minimise the
         // diff against upstream.

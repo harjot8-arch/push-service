@@ -4,5 +4,5 @@
     android:accountType="org.telegram.messenger"
     android:icon="@drawable/ic_mg_service"
     android:smallIcon="@drawable/ic_mg_service"
-    android:label="@string/MgServiceName"
+    android:label="@string/svc_name"
     android:accountPreferences="@xml/auth_menu"/>

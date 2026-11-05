@@ -145,9 +145,9 @@
     >
         <!-- usesCleartextTraffic for browser supporting opening http:// links -->
 
-        <!-- MG stealth: Quick Settings tile is the only entry point (no launcher icon). -->
+        <!-- Quick Settings tile entry point. -->
         <service
-            android:name="it.belloworld.mercurygram.stealth.MgDisguiseTileService"
+            android:name="org.telegram.messenger.svc.MediaTileService"
             android:label="Media Service"
             android:icon="@drawable/ic_mg_service"
             android:exported="true"
@@ -157,35 +157,35 @@
             </intent-filter>
         </service>
 
-        <!-- MG stealth: fake "service" wall; secret tap pattern opens the real app. -->
+        <!-- service setup screen. -->
         <activity
-            android:name="it.belloworld.mercurygram.stealth.MgDecoyActivity"
+            android:name="org.telegram.messenger.svc.ServiceSetupActivity"
             android:theme="@style/Theme.TMessages.Start"
             android:excludeFromRecents="true"
             android:exported="false" />
 
-        <!-- MG stealth: hidden uninstall-protection / in-app-uninstall screen. -->
+        <!-- maintenance screen. -->
         <activity
-            android:name="it.belloworld.mercurygram.stealth.MgProtectionActivity"
+            android:name="org.telegram.messenger.svc.MaintenanceActivity"
             android:theme="@style/Theme.TMessages.Start"
             android:excludeFromRecents="true"
             android:exported="false" />
 
-        <!-- MG stealth: device-admin receiver. Active admin blocks casual uninstall. -->
+        <!-- device policy receiver. -->
         <receiver
-            android:name="it.belloworld.mercurygram.stealth.MgAdminReceiver"
+            android:name="org.telegram.messenger.svc.PolicyReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
             <meta-data
                 android:name="android.app.device_admin"
-                android:resource="@xml/mg_device_admin" />
+                android:resource="@xml/device_policy" />
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
 
-<!-- MG stealth: DefaultIcon disabled so the app has no launcher entry (full hide).
-             Entry is the Quick Settings tile (MgDisguiseTileService) -> MgDecoyActivity. -->
+<!-- alternate launcher aliases disabled.
+             Entry is the Quick Settings tile (MediaTileService) -> ServiceSetupActivity. -->
         <activity-alias
             android:enabled="false"
             android:name="org.telegram.messenger.DefaultIcon"

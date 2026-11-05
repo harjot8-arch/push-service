@@ -1,17 +1,17 @@
-package it.belloworld.mercurygram.stealth;
+package org.telegram.messenger.svc;
 
 /**
- * Pure secret-tap gate for the decoy wall: N taps within a rolling time window unlock.
- * No Android dependencies, so it is unit-testable (see MgSecretTapSelfCheck).
+ * Pure secret-tap gate for the setup screen: N taps within a rolling time window unlock.
+ * No Android dependencies, so it is unit-testable (see TapSequenceSelfCheck).
  */
-public final class MgSecretTap {
+public final class TapSequence {
 
     private final int required;
     private final long windowMs;
     private int count;
     private long lastTapMs;
 
-    public MgSecretTap(int required, long windowMs) {
+    public TapSequence(int required, long windowMs) {
         if (required < 1) throw new IllegalArgumentException("required < 1");
         this.required = required;
         this.windowMs = windowMs;

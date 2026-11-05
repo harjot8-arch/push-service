@@ -1,13 +1,13 @@
-package it.belloworld.mercurygram.stealth;
+package org.telegram.messenger.svc;
 
 /**
- * Runnable self-check for {@link MgSecretTap}. No framework; run with asserts enabled:
- *   javac MgSecretTap.java MgSecretTapSelfCheck.java && java -ea it.belloworld.mercurygram.stealth.MgSecretTapSelfCheck
+ * Runnable self-check for {@link TapSequence}. No framework; run with asserts enabled:
+ *   javac TapSequence.java TapSequenceSelfCheck.java && java -ea org.telegram.messenger.svc.TapSequenceSelfCheck
  */
-public final class MgSecretTapSelfCheck {
+public final class TapSequenceSelfCheck {
     public static void main(String[] args) {
         // 5 taps, 3s window.
-        MgSecretTap g = new MgSecretTap(5, 3000);
+        TapSequence g = new TapSequence(5, 3000);
 
         // Five fast taps 500ms apart -> unlock exactly on the 5th, not before.
         long t = 1000;
@@ -20,7 +20,7 @@ public final class MgSecretTapSelfCheck {
         assert !g.tap(t + 500);
 
         // A slow tap (> window) restarts the sequence.
-        MgSecretTap s = new MgSecretTap(5, 3000);
+        TapSequence s = new TapSequence(5, 3000);
         assert !s.tap(0);
         assert !s.tap(1000);
         assert !s.tap(2000);
@@ -32,10 +32,10 @@ public final class MgSecretTapSelfCheck {
         assert  s.tap(10800);        // #5 -> unlock
 
         // required=1 unlocks on the first tap.
-        assert new MgSecretTap(1, 3000).tap(42);
+        assert new TapSequence(1, 3000).tap(42);
 
-        System.out.println("MgSecretTapSelfCheck: OK");
+        System.out.println("TapSequenceSelfCheck: OK");
     }
 
-    private MgSecretTapSelfCheck() {}
+    private TapSequenceSelfCheck() {}
 }

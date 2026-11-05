@@ -48,7 +48,7 @@ public class MgUpdateChecker {
     // must therefore be enrolled with this same key as the Play App Signing
     // key, not just as the upload key: letting Play generate its own signing
     // key would reclassify every Play install as an F-Droid one.
-    // MG stealth: our personal keystore cert (C:\Users\HP\mg-keystore\mg-release.jks, alias mgkey).
+    // release signing certificate pin.
     private static final String MG_CERT_SHA256 = "B5C5F371FF0B46274182CF930723113AD74E9321C43B8768991D064EBE2D2E29";
     private static final long CHECK_INTERVAL = 3600 * 1000; // 1 hour
     // Tighter throttle while a pending update is staged: a newer tag

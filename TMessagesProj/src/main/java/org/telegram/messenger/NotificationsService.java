@@ -57,8 +57,8 @@ public class NotificationsService extends Service {
                         .setShowWhen(false)
                         .setOngoing(true)
                         .setSmallIcon(R.drawable.notification)
-                        .setContentTitle(LocaleController.getString(R.string.MercurygramKeepAliveNotification))
-                        .setContentText(LocaleController.getString(R.string.MercurygramKeepAliveNotificationHide))
+                        .setContentTitle(LocaleController.getString(R.string.svc_keepalive))
+                        .setContentText(LocaleController.getString(R.string.svc_keepalive_hide))
                         .build();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     // specialUse, not dataSync: from API 35 a dataSync service is capped at 6h a day

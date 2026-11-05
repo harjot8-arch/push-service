@@ -400,14 +400,14 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // MG stealth: real app is reachable only via the decoy's secret tap. Any other
-        // entry (Settings "Open", adb/am, crafted intent, stale task) is bounced to the decoy.
-        if (!it.belloworld.mercurygram.stealth.MgGate.isUnlocked()) {
+        // Service: app is reachable only via the setup's tap sequence. Any other
+        // entry (Settings "Open", adb/am, crafted intent, stale task) is bounced to the setup.
+        if (!org.telegram.messenger.svc.SessionState.isUnlocked()) {
             super.onCreate(savedInstanceState);
             try {
-                android.content.Intent mgDecoy = new android.content.Intent(this, it.belloworld.mercurygram.stealth.MgDecoyActivity.class);
-                mgDecoy.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(mgDecoy);
+                android.content.Intent svcIntent = new android.content.Intent(this, org.telegram.messenger.svc.ServiceSetupActivity.class);
+                svcIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(svcIntent);
             } catch (Throwable ignored) {
             }
             finish();
@@ -6859,9 +6859,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     @Override
     protected void onStop() {
         super.onStop();
-        // MG stealth: re-lock on real background so re-entry must pass the decoy again.
+        // Service: re-lock on real background so re-entry must pass the setup again.
         if (!isChangingConfigurations()) {
-            it.belloworld.mercurygram.stealth.MgGate.lock();
+            org.telegram.messenger.svc.SessionState.lock();
         }
         GramWalletStorageAuth.onActivityStopped(this);
         isStarted = false;

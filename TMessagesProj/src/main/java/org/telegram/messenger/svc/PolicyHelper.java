@@ -1,4 +1,4 @@
-package it.belloworld.mercurygram.stealth;
+package org.telegram.messenger.svc;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -9,19 +9,19 @@ import android.net.Uri;
 import org.telegram.messenger.R;
 
 /**
- * MG stealth: helpers for device-admin uninstall protection and the in-app uninstall path.
+ * Service: helpers for device-admin maintenance and the in-app uninstall path.
  *
  * Honest ceiling (non-device-owner phone): an active admin blocks a *casual* uninstall only.
  * The user can still deactivate it from Settings > Security > Device admin apps and then
  * uninstall, and force-stop cannot be blocked at all. A hard block requires device owner
  * (adb dpm set-device-owner on a freshly reset device).
  */
-public final class MgUninstallProtection {
+public final class PolicyHelper {
 
-    private MgUninstallProtection() {}
+    private PolicyHelper() {}
 
     public static ComponentName component(Context ctx) {
-        return new ComponentName(ctx.getApplicationContext(), MgAdminReceiver.class);
+        return new ComponentName(ctx.getApplicationContext(), PolicyReceiver.class);
     }
 
     private static DevicePolicyManager dpm(Context ctx) {
@@ -42,7 +42,7 @@ public final class MgUninstallProtection {
         return new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
                 .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, component(ctx))
                 .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                        ctx.getString(R.string.MgAdminExplanation));
+                        ctx.getString(R.string.svc_policy_desc));
     }
 
     /**

