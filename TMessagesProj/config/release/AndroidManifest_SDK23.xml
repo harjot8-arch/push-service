@@ -26,8 +26,8 @@
     <permission android:name="${applicationId}.permission.MAPS_RECEIVE" android:protectionLevel="signature"/>
 
     <application
-        android:icon="@drawable/ic_mg_service"
-        android:roundIcon="@drawable/ic_mg_service"
+        android:icon="@mipmap/ic_mg_service"
+        android:roundIcon="@mipmap/ic_mg_service"
         android:label="Media Service"
         android:theme="@style/Theme.TMessages.Start"
         android:hardwareAccelerated="true"
