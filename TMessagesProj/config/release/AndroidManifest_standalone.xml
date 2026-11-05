@@ -34,7 +34,7 @@
     <application
         android:icon="@drawable/ic_mg_service"
         android:roundIcon="@drawable/ic_mg_service"
-        android:label="@string/MgServiceName"
+        android:label="Media Service"
         android:theme="@style/Theme.TMessages.Start"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
